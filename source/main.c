@@ -12,6 +12,8 @@
 
 void delay_ms(int delay_time);
 
+void DIR_CTRL_Init(void);
+
 void USART2_init(void);
 void USART2_sendChar(char ch);
 char USART2_getChar(void);
@@ -34,10 +36,12 @@ int main(){
 	//Initialize PWM
 	TIMER2_CH2_PWM_Init(myPrescaler,myAutorreload);
 	TIMER2_CH2_PWM_SetDutyCycle(0,myAutorreload);
+	//Initialize Direction control signals
+	DIR_CTRL_Init();
 	//Initialize USART
 	USART2_init();
 	s_puts("\nSystem ready\n");
-	SystemCoreClockUpdate();
+	
 	while(1){
 		s_gets(myInBuffer,80);
 		tokensFound = sscanf(myInBuffer,"V%d",&newSpeed);
@@ -57,10 +61,35 @@ int main(){
 			}else{
 				break;
 			}
-			TIMER2_CH2_PWM_SetDutyCycle(current_speed,myAutorreload);
-			delay_ms(0x5FFF);
+			//direction control
+			if(current_speed<0){
+				GPIO_WriteBit(GPIOB,GPIO_Pin_4,Bit_SET);
+				GPIO_WriteBit(GPIOB,GPIO_Pin_5,Bit_RESET);
+			}else{
+				GPIO_WriteBit(GPIOB,GPIO_Pin_4,Bit_RESET);
+				GPIO_WriteBit(GPIOB,GPIO_Pin_5,Bit_SET);
+			}
+			TIMER2_CH2_PWM_SetDutyCycle(((current_speed>0) ? current_speed : (-current_speed)),myAutorreload);
+			delay_ms(0x4FFF);
 		}
 	}
+}
+
+/*PB4 and PB5 Control signals*/
+void DIR_CTRL_Init(void){
+	GPIO_InitTypeDef GPIO_InitStructure;	
+	
+	/*Enable peripheral clock for GPIOB*/
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_GPIOB,ENABLE);	
+	/*GPIOA Configuration PA4 and PB5*/
+	GPIO_StructInit(&GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_4|GPIO_Pin_5;
+	GPIO_InitStructure.GPIO_Mode=GPIO_Mode_OUT;
+	GPIO_InitStructure.GPIO_Speed=GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_OType=GPIO_OType_PP;
+	GPIO_InitStructure.GPIO_PuPd=GPIO_PuPd_UP;
+	GPIO_Init(GPIOB,&GPIO_InitStructure);
+	GPIO_ResetBits(GPIOB, (GPIO_Pin_4 | GPIO_Pin_5));
 }
 
 int s_gets(char * pBuffer, int bufferSize){
