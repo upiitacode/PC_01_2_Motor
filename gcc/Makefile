@@ -2,7 +2,7 @@ INCLUDE_DIRS:= device/include cmsis/include ../include ../STM32F30x_StdPeriph_Dr
 SOURCE_DIRS:=  device/source ../source ../STM32F30x_StdPeriph_Driver/src
 
 #the C files to compile
-CFILES:= system_stm32f30x.c main.c
+CFILES:= system_stm32f30x.c main.c timer2_ch2_pwm.c
 #the assembly files assemble
 ASM_FILES:= startup_stm32f302x8.S
 #the target microcontroller
