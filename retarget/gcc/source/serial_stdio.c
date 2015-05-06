@@ -28,3 +28,13 @@ int serial_gets(Serial_t  serial,char * pBuffer, int bufferSize){
 	pBuffer[bufferSize-1]='\0';
 	return bufferSize-1;
 }
+
+void serial_printf(Serial_t  serial, const char * format ,...){
+	char * tempBuffer;
+	va_list args;
+	va_start(args, format);
+	vasprintf(&tempBuffer,format, args);
+	va_end(args);
+	serial_puts(serial,tempBuffer);
+	free(tempBuffer);
+}
